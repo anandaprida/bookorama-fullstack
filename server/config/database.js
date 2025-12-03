@@ -1,10 +1,10 @@
 const { Sequelize } = require('sequelize');
+const pg = require('pg'); // <--- 1. Import manual library pg
 
-// Jika ada env variable DATABASE_URL (saat di Cloud), pakai itu.
-// Jika tidak (di laptop), pakai settingan localhost lama.
 const sequelize = process.env.DATABASE_URL 
   ? new Sequelize(process.env.DATABASE_URL, {
       dialect: 'postgres',
+      dialectModule: pg, // <--- 2. Paksa Sequelize pakai module ini (PENTING BUAT VERCEL)
       protocol: 'postgres',
       dialectOptions: {
         ssl: {
@@ -14,7 +14,7 @@ const sequelize = process.env.DATABASE_URL
       },
       logging: false
     })
-  : new Sequelize('bookorama', 'postgres', 'awok', { // Ganti password lokalmu
+  : new Sequelize('bookorama', 'postgres', 'awok', {
       host: '127.0.0.1',
       port: 5173,
       dialect: 'postgres',
