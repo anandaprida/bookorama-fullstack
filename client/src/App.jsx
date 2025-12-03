@@ -1,7 +1,12 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { ShoppingCart, User, BookOpen, LogOut, Package, Plus, Trash2, Home, LayoutDashboard, List, Image as ImageIcon, ArrowLeft, Clock, Settings, Save } from 'lucide-react';
 
-const API_URL = 'http://localhost:5001/api';
+// --- PERBAIKAN DI SINI ---
+// Sekarang kode akan mengecek:
+// 1. Apakah ada settingan VITE_API_URL di Vercel? Kalau ada, pakai itu.
+// 2. Kalau tidak ada (di laptop), pakai localhost.
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+
 const AuthContext = createContext(null);
 const CartContext = createContext(null);
 
@@ -14,13 +19,20 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     try {
+      // Debugging: Cek ke mana frontend menembak
+      console.log("Mencoba login ke:", `${API_URL}/auth/login`);
+      
       const res = await fetch(`${API_URL}/auth/login`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password })
       });
       const data = await res.json();
       if (res.ok) login(data); else setError(data.message);
-    } catch (err) { setError('Gagal koneksi server'); }
+    } catch (err) { 
+      console.error(err);
+      setError('Gagal koneksi server. Cek console untuk detail.'); 
+    }
   };
 
   return (
@@ -195,7 +207,7 @@ const ProfilePage = ({ user }) => {
   )
 }
 
-// --- Admin Components (Sederhana) ---
+// --- Admin Components ---
 const AdminBooks = () => {
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -261,16 +273,12 @@ const AdminCategories = () => {
 };
 
 // --- Nav Components ---
-
-// Navbar ATAS (Desktop Full, Mobile hanya Logo & Logout)
 const Navbar = ({ user, setView, logout, cartCount }) => (
   <nav className="bg-indigo-600 text-white shadow sticky top-0 z-50">
     <div className="max-w-7xl mx-auto px-4 flex justify-between h-16 items-center">
       <div className="font-bold text-xl cursor-pointer flex items-center gap-2" onClick={() => setView('home')}>
         <BookOpen /> <span className="hidden sm:inline">Bookorama</span> <span className="sm:hidden">Bookorama</span>
       </div>
-      
-      {/* Desktop Menu (Hidden on Mobile) */}
       <div className="hidden md:flex items-center gap-4">
         {user.role === 'Customer' ? (
           <>
@@ -287,8 +295,6 @@ const Navbar = ({ user, setView, logout, cartCount }) => (
         )}
         <button onClick={logout} className="ml-2 bg-red-500 p-1.5 rounded hover:bg-red-600 flex items-center gap-1 text-sm"><LogOut size={16}/> Logout</button>
       </div>
-
-      {/* Mobile Header (Hanya tombol Logout/Admin di kanan, menu navigasi customer ada di bawah) */}
       <div className="md:hidden flex items-center">
          <button onClick={logout} className="bg-red-500 p-1.5 rounded hover:bg-red-600"><LogOut size={16}/></button>
       </div>
@@ -296,31 +302,14 @@ const Navbar = ({ user, setView, logout, cartCount }) => (
   </nav>
 );
 
-// Navbar BAWAH (Hanya muncul di Mobile & Khusus Customer)
 const MobileBottomNav = ({ user, setView, cartCount }) => {
   if (user.role !== 'Customer') return null;
-
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50 flex justify-around items-center h-16 text-gray-500">
-      <button onClick={() => setView('home')} className="flex flex-col items-center justify-center w-full h-full hover:text-indigo-600 active:text-indigo-600">
-        <Home size={20} />
-        <span className="text-[10px] mt-1">Home</span>
-      </button>
-      <button onClick={() => setView('orders')} className="flex flex-col items-center justify-center w-full h-full hover:text-indigo-600 active:text-indigo-600">
-        <Clock size={20} />
-        <span className="text-[10px] mt-1">History</span>
-      </button>
-      <button onClick={() => setView('cart')} className="flex flex-col items-center justify-center w-full h-full hover:text-indigo-600 active:text-indigo-600 relative">
-        <div className="relative">
-          <ShoppingCart size={20} />
-          {cartCount > 0 && <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 rounded-full">{cartCount}</span>}
-        </div>
-        <span className="text-[10px] mt-1">Cart</span>
-      </button>
-      <button onClick={() => setView('profile')} className="flex flex-col items-center justify-center w-full h-full hover:text-indigo-600 active:text-indigo-600">
-        <User size={20} />
-        <span className="text-[10px] mt-1">Profil</span>
-      </button>
+      <button onClick={() => setView('home')} className="flex flex-col items-center justify-center w-full h-full hover:text-indigo-600 active:text-indigo-600"><Home size={20} /><span className="text-[10px] mt-1">Home</span></button>
+      <button onClick={() => setView('orders')} className="flex flex-col items-center justify-center w-full h-full hover:text-indigo-600 active:text-indigo-600"><Clock size={20} /><span className="text-[10px] mt-1">History</span></button>
+      <button onClick={() => setView('cart')} className="flex flex-col items-center justify-center w-full h-full hover:text-indigo-600 active:text-indigo-600 relative"><div className="relative"><ShoppingCart size={20} />{cartCount > 0 && <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 rounded-full">{cartCount}</span>}</div><span className="text-[10px] mt-1">Cart</span></button>
+      <button onClick={() => setView('profile')} className="flex flex-col items-center justify-center w-full h-full hover:text-indigo-600 active:text-indigo-600"><User size={20} /><span className="text-[10px] mt-1">Profil</span></button>
     </div>
   );
 };
@@ -375,31 +364,22 @@ export default function App() {
       if (view === 'admin_cats') return <AdminCategories />;
       return <AdminBooks />;
     }
-    // Customer Views
     if (view === 'book_detail' && selectedBook) return <BookDetail book={selectedBook} onBack={() => setView('home')} />;
     if (view === 'cart') return <CartPage />;
     if (view === 'orders') return <OrderHistory user={user} />;
     if (view === 'profile') return <ProfilePage user={user} />;
-    
     return <BookList onSelectBook={(book) => { setSelectedBook(book); setView('book_detail'); }} />;
   };
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
       <CartContext.Provider value={{ cart, addToCart, removeFromCart, checkout }}>
-        {/* Tambahkan pb-20 agar konten tidak tertutup Bottom Nav di Mobile */}
         <div className="min-h-screen bg-gray-100 font-sans text-gray-900 pb-20 md:pb-10">
-          
-          {/* Navbar Atas (Desktop Full, Mobile Minimalis) */}
           <Navbar user={user} setView={(v) => { setView(v); setSelectedBook(null); }} logout={logout} cartCount={cart.reduce((a,b)=>a+b.quantity,0)} />
-          
           <main className="max-w-7xl mx-auto py-6 px-4">
             {renderContent()}
           </main>
-
-          {/* Navbar Bawah (Khusus Mobile & Customer) */}
           <MobileBottomNav user={user} setView={(v) => { setView(v); setSelectedBook(null); }} cartCount={cart.reduce((a,b)=>a+b.quantity,0)} />
-          
         </div>
       </CartContext.Provider>
     </AuthContext.Provider>
