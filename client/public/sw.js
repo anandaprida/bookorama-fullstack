@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bookorama-v2';
+const CACHE_NAME = 'bookorama-v3';
 const urlsToCache = [
   '/',
   '/index.html',
