@@ -2,10 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const db = require('./models');
 
-// --- SWAGGER SETUP (BARU) ---
+// --- SWAGGER SETUP ---
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./swaggerDef');
-// ----------------------------
+// ---------------------
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -13,9 +13,9 @@ const PORT = process.env.PORT || 5001;
 app.use(cors());
 app.use(express.json());
 
-// --- ROUTE SWAGGER (BARU) ---
+// --- ROUTE SWAGGER ---
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-// ----------------------------
+// ---------------------
 
 // --- API ENDPOINTS ---
 
@@ -144,11 +144,19 @@ app.get('/api/transactions', async (req, res) => {
   }
 });
 
-// Start Server
-db.sequelize.sync({ force: false }).then(() => {
-  console.log("Database connected.");
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Docs available at http://localhost:${PORT}/api-docs`); // Info URL Dokumentasi
-  });
-}).catch(err => console.log("DB Error: " + err));
+// --- SERVER STARTUP (MODIFIKASI VERCEL) ---
+
+// 1. Export 'app' agar Vercel bisa menjalankannya sebagai Serverless Function
+module.exports = app;
+
+// 2. Cek apakah file ini dijalankan langsung (node app.js) atau di-import oleh Vercel
+// Jika dijalankan langsung (Localhost), kita panggil app.listen
+if (require.main === module) {
+  db.sequelize.sync({ force: false }).then(() => {
+    console.log("Database connected.");
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`Docs available at http://localhost:${PORT}/api-docs`);
+    });
+  }).catch(err => console.log("DB Error: " + err));
+}
